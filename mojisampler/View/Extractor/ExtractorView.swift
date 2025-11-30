@@ -62,7 +62,7 @@ public struct ExtractorView: View {
                 }
             }
             ToolbarItem(placement: .bottomBar) {
-                TextField("", text: $tagSearchWord)
+                TextField("タグを入力", text: $tagSearchWord)
                     .padding(.leading, 16)
             }
             ToolbarItem(placement: .bottomBar) {
