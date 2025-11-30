@@ -10,6 +10,7 @@ import SwiftUI
 public struct WordsScrollFlowView: View {
     private var words: [Word]
     private var onLastWordAppearAction: (() -> Void)?
+    private var onSelectWord: ((Word) -> Void)?
 
     public init(words: [Word]) {
         self.words = words
@@ -20,17 +21,21 @@ public struct WordsScrollFlowView: View {
             FlowLayout(alignment: .topLeading, spacing: 8) {
                 ForEach(words) { word in
                     if let uiImage = UIImage(data: word.imageData) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(height: 66)
-                            .onAppear {
-                                guard word.id == words.last?.id else {
-                                    return
+                        Button {
+                            onSelectWord?(word)
+                        } label: {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 66)
+                                .onAppear {
+                                    guard word.id == words.last?.id else {
+                                        return
+                                    }
+                                    // TODO: 2回目以降に読み込まない不具合の修正
+                                    onLastWordAppearAction?()
                                 }
-                                // TODO: 2回目以降に読み込まない不具合の修正
-                                onLastWordAppearAction?()
-                            }
+                        }
                     }
                 }
             }
@@ -42,6 +47,12 @@ public struct WordsScrollFlowView: View {
     public func onLastWordAppear(perform onLastWordAppearAction: @escaping () -> Void) -> Self {
         var view = self
         view.onLastWordAppearAction = onLastWordAppearAction
+        return view
+    }
+
+    public func onSelectWord(perform onSelectWord: @escaping (Word) -> Void) -> Self {
+        var view = self
+        view.onSelectWord = onSelectWord
         return view
     }
 }

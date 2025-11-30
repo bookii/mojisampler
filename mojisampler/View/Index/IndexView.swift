@@ -13,6 +13,7 @@ public struct IndexView: View {
     private enum Destination: Hashable {
         case extractor(uiImage: UIImage)
         case textEditor
+        case wordDetail(_ word: Word)
     }
 
     // DEBUG
@@ -31,6 +32,9 @@ public struct IndexView: View {
             Text("集めた文字数: \(String(countCharacters()))")
                 .font(.system(size: 24))
             WordsScrollFlowView(words: analyzedImages.flatMap(\.words))
+                .onSelectWord { word in
+                    path.append(Destination.wordDetail(word))
+                }
         }
         .onChange(of: pickerItem) {
             guard let pickerItem else {
@@ -53,6 +57,8 @@ public struct IndexView: View {
                 ExtractorView(path: $path, uiImage: uiImage)
             case .textEditor:
                 TextEditorView(path: $path)
+            case let .wordDetail(word):
+                WordDetailView(path: $path, word: word)
             }
         }
         .toolbar {
@@ -67,12 +73,6 @@ public struct IndexView: View {
                 PhotosPicker(selection: $pickerItem, matching: .images) {
                     Label("", systemImage: "plus")
                 }
-            }
-        }
-        .onAppear {
-            // DEBUG
-            for tag in tags {
-                print(tag.text)
             }
         }
     }
