@@ -57,6 +57,7 @@ public struct ExtractorView: View {
                         dismiss()
                     } catch {
                         self.error = error
+                        isErrorAlertPresented = true
                     }
                 }
             }
