@@ -70,6 +70,7 @@ public struct ExtractorView: View {
                     tags.append(.init(text: tagSearchWord))
                     tagSearchWord = ""
                 }
+                .disabled(tagSearchWord.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         }
         .alert(error?.localizedDescription ?? "Unknown error", isPresented: $isErrorAlertPresented) {
