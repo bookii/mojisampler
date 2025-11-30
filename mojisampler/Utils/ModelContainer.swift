@@ -18,7 +18,7 @@ public extension ModelContainer {
                 // TODO: 準備が整ったら false にする
                 isStoredInMemoryOnly = true
             #endif
-            return try .init(for: AnalyzedImage.self, Word.self, configurations: ModelConfiguration(isStoredInMemoryOnly: isStoredInMemoryOnly))
+            return try .init(for: AnalyzedImage.self, Word.self, Tag.self, configurations: ModelConfiguration(isStoredInMemoryOnly: isStoredInMemoryOnly))
         } catch {
             fatalError("Failed to init modelContainer: \(error)")
         }
