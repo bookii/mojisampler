@@ -90,8 +90,10 @@ public struct ExtractorView: View {
     private func mainView(analyzedImage: AnalyzedImage) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             ScrollView(.horizontal) {
-                ForEach(tags) { tag in
-                    tagView(tag)
+                HStack(spacing: 8) {
+                    ForEach(tags) { tag in
+                        tagView(tag)
+                    }
                 }
             }
             WordsScrollFlowView(words: analyzedImage.words)
