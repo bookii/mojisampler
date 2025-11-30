@@ -104,7 +104,7 @@ public struct ExtractorView: View {
 
     private func tagView(_ tag: Tag) -> some View {
         Menu {
-            Button("削除") {
+            Button("削除", role: .destructive) {
                 tags.removeAll(where: { $0.id == tag.id })
             }
         } label: {
