@@ -44,8 +44,8 @@ public struct ExtractorView: View {
                     guard let analyzedImage else {
                         return
                     }
-                    analyzedImage.words = analyzedImage.words.map { .init(text: $0.text, imageData: $0.imageData, indexInAnalyzedImage: $0.indexInAnalyzedImage, tags: tags) }
                     for word in analyzedImage.words {
+                        word.tags = tags
                         modelContext.insert(word)
                     }
                     modelContext.insert(analyzedImage)
