@@ -19,6 +19,8 @@ public struct ExtractorView: View {
     @State private var error: Error?
     @State private var isErrorAlertPresented: Bool = false
     @State private var viewWidth: CGFloat = 0
+    @State private var tagSearchWord: String = ""
+    @State private var tags: [Tag] = []
     private let uiImage: UIImage
 
     public init(path: Binding<NavigationPath>, uiImage: UIImage) {
@@ -29,11 +31,7 @@ public struct ExtractorView: View {
     public var body: some View {
         Group {
             if let analyzedImage {
-                WordsScrollFlowView(words: analyzedImage.words)
-                    .onGeometryChange(for: CGFloat.self, of: \.size.width) { width in
-                        viewWidth = width
-                    }
-                    .padding(16)
+                mainView(analyzedImage: analyzedImage)
             } else {
                 ProgressView()
             }
@@ -46,8 +44,30 @@ public struct ExtractorView: View {
                     guard let analyzedImage else {
                         return
                     }
+                    analyzedImage.words = analyzedImage.words.map { .init(text: $0.text, imageData: $0.imageData, indexInAnalyzedImage: $0.indexInAnalyzedImage, tags: tags) }
+                    for word in analyzedImage.words {
+                        modelContext.insert(word)
+                    }
                     modelContext.insert(analyzedImage)
-                    dismiss()
+                    for tag in tags {
+                        modelContext.insert(tag)
+                    }
+                    do {
+                        try modelContext.save()
+                        dismiss()
+                    } catch {
+                        self.error = error
+                    }
+                }
+            }
+            ToolbarItem(placement: .bottomBar) {
+                TextField("", text: $tagSearchWord)
+                    .padding(.leading, 16)
+            }
+            ToolbarItem(placement: .bottomBar) {
+                Button("", systemImage: "plus", role: .none) {
+                    tags.append(.init(text: tagSearchWord))
+                    tagSearchWord = ""
                 }
             }
         }
@@ -63,6 +83,37 @@ public struct ExtractorView: View {
                 self.error = error
             }
         }
+    }
+
+    private func mainView(analyzedImage: AnalyzedImage) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            ScrollView(.horizontal) {
+                ForEach(tags) { tag in
+                    tagView(tag)
+                }
+            }
+            WordsScrollFlowView(words: analyzedImage.words)
+                .onGeometryChange(for: CGFloat.self, of: \.size.width) { width in
+                    viewWidth = width
+                }
+        }
+        .padding(.horizontal, 16)
+    }
+
+    private func tagView(_ tag: Tag) -> some View {
+        Menu {
+            Button("削除") {
+                tags.removeAll(where: { $0.id == tag.id })
+            }
+        } label: {
+            Text("#\(tag.text)")
+                .font(.body)
+        }
+        .foregroundStyle(Color.white)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(in: Capsule())
+        .backgroundStyle(Color.blue)
     }
 }
 

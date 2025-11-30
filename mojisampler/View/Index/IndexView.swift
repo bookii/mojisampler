@@ -15,6 +15,9 @@ public struct IndexView: View {
         case textEditor
     }
 
+    // DEBUG
+    @Query private var tags: [Tag]
+
     @Query private var analyzedImages: [AnalyzedImage]
     @State private var pickerItem: PhotosPickerItem?
     @Binding private var path: NavigationPath
@@ -64,6 +67,12 @@ public struct IndexView: View {
                 PhotosPicker(selection: $pickerItem, matching: .images) {
                     Label("", systemImage: "plus")
                 }
+            }
+        }
+        .onAppear {
+            // DEBUG
+            for tag in tags {
+                print(tag.text)
             }
         }
     }

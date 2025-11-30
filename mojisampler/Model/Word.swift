@@ -15,12 +15,14 @@ public final class Word: Identifiable, @unchecked Sendable {
     public private(set) var text: String
     public private(set) var imageData: Data
     public private(set) var indexInAnalyzedImage: Int
+    @Relationship(deleteRule: .nullify) public var tags: [Tag]
 
-    public init(id: UUID = .init(), text: String, imageData: Data, indexInAnalyzedImage: Int) {
+    public init(id: UUID = .init(), text: String, imageData: Data, indexInAnalyzedImage: Int, tags: [Tag] = []) {
         self.id = id
         self.text = text
         self.imageData = imageData
         self.indexInAnalyzedImage = indexInAnalyzedImage
+        self.tags = tags
     }
 }
 
