@@ -101,7 +101,7 @@ public struct FlowLayout: Layout {
                                 frame: CGRect(x: 0, y: rowMinY, width: rowWidth, height: rowHeight)))
                 bounds.width = max(bounds.width, rowWidth)
                 let ySpacing = spacing ?? ViewSpacing().distance(to: ViewSpacing(), along: .vertical)
-                bounds.height = rowHeight + ySpacing
+                bounds.height += rowHeight + ySpacing
                 rowMinY += rowHeight + ySpacing
                 itemsInRow = 0
                 rowHeight = 0

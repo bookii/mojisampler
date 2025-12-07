@@ -29,8 +29,8 @@ public extension Tag {
                 Tag(text: "あたたかい"),
                 Tag(text: "独特"),
                 Tag(text: "看板"),
-                Tag(text: "手書き"),
                 Tag(text: "あのひとへ"),
+                Tag(text: "手書き"),
             ]
         }
     #endif

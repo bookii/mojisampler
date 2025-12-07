@@ -13,7 +13,7 @@ public extension ModelContainer {
         do {
             let isStoredInMemoryOnly: Bool
             #if DEBUG
-                isStoredInMemoryOnly = true
+                isStoredInMemoryOnly = false
             #else
                 // TODO: 準備が整ったら false にする
                 isStoredInMemoryOnly = true

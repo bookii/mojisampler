@@ -60,6 +60,7 @@ public struct ExtractorView: View {
                         isErrorAlertPresented = true
                     }
                 }
+                .disabled(tags.isEmpty)
             }
             ToolbarItem(placement: .bottomBar) {
                 TextField("タグを入力", text: $tagSearchWord)
@@ -96,10 +97,12 @@ public struct ExtractorView: View {
                     }
                 }
             }
-            WordsScrollFlowView(words: analyzedImage.words)
-                .onGeometryChange(for: CGFloat.self, of: \.size.width) { width in
-                    viewWidth = width
-                }
+            ScrollView {
+                WordsFlowLayoutView(analyzedImage.words)
+                    .onGeometryChange(for: CGFloat.self, of: \.size.width) { width in
+                        viewWidth = width
+                    }
+            }
         }
         .padding(.horizontal, 16)
     }

@@ -7,38 +7,45 @@
 
 import SwiftUI
 
-public struct WordsScrollFlowView: View {
+public struct WordsFlowLayoutView: View {
     private var words: [Word]
     private var onLastWordAppearAction: (() -> Void)?
-    private var onSelectWord: ((Word) -> Void)?
+    private var onSelectWordAction: ((Word) -> Void)?
+    private var onDeleteWordAction: ((Word) -> Void)?
 
-    public init(words: [Word]) {
+    public init(_ words: [Word]) {
         self.words = words
     }
 
     public var body: some View {
-        ScrollView {
+        HStack(spacing: 0) {
             FlowLayout(alignment: .topLeading, spacing: 8) {
                 ForEach(words) { word in
                     if let uiImage = UIImage(data: word.imageData) {
                         Button {
-                            onSelectWord?(word)
+                            onSelectWordAction?(word)
                         } label: {
                             Image(uiImage: uiImage)
                                 .resizable()
                                 .scaledToFit()
                                 .frame(height: 66)
                                 .onAppear {
-                                    guard word.id == words.last?.id else {
-                                        return
+                                    if word.id == words.last?.id {
+                                        onLastWordAppearAction?()
                                     }
-                                    // TODO: 2回目以降に読み込まない不具合の修正
-                                    onLastWordAppearAction?()
                                 }
+                        }
+                        .contextMenu {
+                            if let onDeleteWordAction {
+                                Button("削除", role: .destructive) {
+                                    onDeleteWordAction(word)
+                                }
+                            }
                         }
                     }
                 }
             }
+            Spacer(minLength: 0)
         }
     }
 
@@ -50,9 +57,15 @@ public struct WordsScrollFlowView: View {
         return view
     }
 
-    public func onSelectWord(perform onSelectWord: @escaping (Word) -> Void) -> Self {
+    public func onSelectWord(perform onSelectWordAction: @escaping (Word) -> Void) -> Self {
         var view = self
-        view.onSelectWord = onSelectWord
+        view.onSelectWordAction = onSelectWordAction
+        return view
+    }
+
+    public func onDeleteWord(perform onDeleteWordAction: @escaping (Word) -> Void) -> Self {
+        var view = self
+        view.onDeleteWordAction = onDeleteWordAction
         return view
     }
 }
@@ -61,15 +74,25 @@ public struct WordsScrollFlowView: View {
     #Preview {
         @Previewable @State var words = [Word]()
         @Previewable @State var text = ""
-        VStack {
-            WordsScrollFlowView(words: words)
-                .onLastWordAppear {
-                    text = "Last word appeared"
-                }
-                .task {
-                    words = await AnalyzedImage.mockAnalyzedImage().words
-                }
-            Text(text)
+        ScrollView {
+            VStack {
+                WordsFlowLayoutView(words)
+                    .onLastWordAppear {
+                        text = "Last word appeared"
+                    }
+                    .onSelectWord { word in
+                        text = "\(word.text) selected"
+                    }
+                    .onDeleteWord { word in
+                        words.removeAll { $0.id == word.id }
+                    }
+                    .frame(maxWidth: .infinity)
+                Text(text)
+            }
+            .padding(16)
+        }
+        .task {
+            words = await AnalyzedImage.mockAnalyzedImage().words
         }
     }
 #endif

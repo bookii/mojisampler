@@ -31,11 +31,14 @@ public struct IndexView: View {
         VStack(spacing: 8) {
             Text("集めた文字数: \(String(countCharacters()))")
                 .font(.system(size: 24))
-            WordsScrollFlowView(words: analyzedImages.flatMap(\.words))
-                .onSelectWord { word in
-                    path.append(Destination.wordDetail(word))
-                }
+            ScrollView {
+                WordsFlowLayoutView(analyzedImages.flatMap(\.words))
+                    .onSelectWord { word in
+                        path.append(Destination.wordDetail(word))
+                    }
+            }
         }
+        .padding(.horizontal, 16)
         .onChange(of: pickerItem) {
             guard let pickerItem else {
                 return
