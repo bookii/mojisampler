@@ -37,7 +37,6 @@ public struct WordDetailView: View {
                     TagsFlowLayoutView(word.tags)
                         .onDeleteTag { deletedTag in
                             word.tags.removeAll { $0.id == deletedTag.id }
-                            modelContext.insert(word)
                         }
                 }
                 .scrollBounceBehavior(.basedOnSize)
@@ -48,6 +47,11 @@ public struct WordDetailView: View {
         }
         .padding(.horizontal, 16)
         .navigationTitle(word.text)
+        .alert(error?.localizedDescription ?? "Unknown error", isPresented: $isErrorAlertPresented) {
+            Button("OK") {
+                self.error = nil
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
