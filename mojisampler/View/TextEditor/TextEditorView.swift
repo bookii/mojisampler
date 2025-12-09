@@ -14,6 +14,7 @@ public struct TextEditorView: View {
         case photoLibraryUnavailable
     }
 
+    private let tag: Tag
     @Environment(\.dismiss) private var dismiss
     @Binding private var path: NavigationPath
     @State private var isFirstResponder: Bool = false
@@ -24,8 +25,9 @@ public struct TextEditorView: View {
     @State private var error: Swift.Error?
     @State private var isErrorAlertPresented: Bool = false
 
-    public init(path: Binding<NavigationPath>) {
+    public init(path: Binding<NavigationPath>, tag: Tag) {
         _path = path
+        self.tag = tag
     }
 
     public var body: some View {
@@ -109,7 +111,7 @@ public struct TextEditorView: View {
 #if DEBUG
     #Preview {
         NavigationRootView { path in
-            TextEditorView(path: path)
+            TextEditorView(path: path, tag: Tag.mockTags.first!)
         }
     }
 #endif

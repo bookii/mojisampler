@@ -22,11 +22,11 @@ public struct IndexView: View {
         case stats
     }
 
+    @Binding private var path: NavigationPath
     @Query private var tags: [Tag]
     @Query private var analyzedImages: [AnalyzedImage]
     @State private var selectedTab: TabType = .words
     @State private var pickerItem: PhotosPickerItem?
-    @Binding private var path: NavigationPath
 
     public init(path: Binding<NavigationPath>) {
         _path = path
@@ -66,16 +66,16 @@ public struct IndexView: View {
                 }
             }
         }
-        .navigationBarTitleDisplayMode(.inline)
         .navigationTitle(selectedTab.title)
+        .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(for: Destination.self) { destination in
             switch destination {
             case let .extractor(uiImage):
                 ExtractorView(path: $path, uiImage: uiImage)
             case let .wordDetail(word):
                 WordDetailView(path: $path, word: word)
-            case .tagDetail:
-                EmptyView()
+            case let .tagDetail(tag):
+                TagDetailView(path: $path, tag: tag)
             }
         }
         .toolbar {
