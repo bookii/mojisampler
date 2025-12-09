@@ -12,7 +12,9 @@ public extension ModelContainer {
     static let shared: ModelContainer = {
         do {
             let isStoredInMemoryOnly: Bool
-            #if DEBUG
+            #if targetEnvironment(simulator)
+                isStoredInMemoryOnly = true
+            #elseif DEBUG
                 isStoredInMemoryOnly = false
             #else
                 // TODO: 準備が整ったら false にする

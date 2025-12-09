@@ -12,14 +12,19 @@ import SwiftUI
 public struct IndexView: View {
     private enum Destination: Hashable {
         case extractor(uiImage: UIImage)
-        case textEditor
         case wordDetail(_ word: Word)
+        case tagDetail(_ tag: Tag)
     }
 
-    // DEBUG
-    @Query private var tags: [Tag]
+    fileprivate enum TabType: Hashable {
+        case words
+        case tags
+        case stats
+    }
 
+    @Query private var tags: [Tag]
     @Query private var analyzedImages: [AnalyzedImage]
+    @State private var selectedTab: TabType = .words
     @State private var pickerItem: PhotosPickerItem?
     @Binding private var path: NavigationPath
 
@@ -28,14 +33,21 @@ public struct IndexView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 8) {
-            Text("集めた文字数: \(String(countCharacters()))")
-                .font(.system(size: 24))
-            ScrollView {
-                WordsFlowLayoutView(analyzedImages.flatMap(\.words))
-                    .onSelectWord { word in
-                        path.append(Destination.wordDetail(word))
-                    }
+        TabView(selection: $selectedTab) {
+            Tab(value: TabType.words) {
+                wordsView
+            } label: {
+                Image(systemName: "photo")
+            }
+            Tab(value: TabType.tags) {
+                tagsView
+            } label: {
+                Image(systemName: "tag")
+            }
+            Tab(value: TabType.stats) {
+                statsView
+            } label: {
+                Image(systemName: "chart.bar.xaxis")
             }
         }
         .padding(.horizontal, 16)
@@ -54,30 +66,59 @@ public struct IndexView: View {
                 }
             }
         }
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle(selectedTab.title)
         .navigationDestination(for: Destination.self) { destination in
             switch destination {
             case let .extractor(uiImage):
                 ExtractorView(path: $path, uiImage: uiImage)
-            case .textEditor:
-                TextEditorView(path: $path)
             case let .wordDetail(word):
                 WordDetailView(path: $path, word: word)
+            case .tagDetail:
+                EmptyView()
             }
         }
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    path.append(Destination.textEditor)
-                } label: {
-                    Image(systemName: "square.and.pencil")
+            switch selectedTab {
+            case .words:
+                ToolbarItem(placement: .primaryAction) {
+                    PhotosPicker(selection: $pickerItem, matching: .images) {
+                        Label("", systemImage: "plus")
+                    }
                 }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                PhotosPicker(selection: $pickerItem, matching: .images) {
-                    Label("", systemImage: "plus")
+            case .tags:
+                ToolbarItem(placement: .primaryAction) {
+                    Button("", systemImage: "plus") {}
+                }
+            case .stats:
+                ToolbarItem {
+                    EmptyView()
                 }
             }
         }
+    }
+
+    private var wordsView: some View {
+        ScrollView {
+            WordsFlowLayoutView(analyzedImages.flatMap(\.words))
+                .onSelectWord { word in
+                    path.append(Destination.wordDetail(word))
+                }
+        }
+    }
+
+    private var tagsView: some View {
+        ScrollView {
+            TagsFlowLayoutView(tags)
+                .onSelectTag { tag in
+                    path.append(Destination.tagDetail(tag))
+                }
+        }
+    }
+
+    private var statsView: some View {
+        Text("集めた文字数: \(String(countCharacters()))")
+            .font(.system(size: 24))
     }
 
     private func countCharacters() -> Int {
@@ -87,14 +128,31 @@ public struct IndexView: View {
     }
 }
 
+private extension IndexView.TabType {
+    var title: String {
+        switch self {
+        case .words:
+            "ワード一覧"
+        case .tags:
+            "タグ一覧"
+        case .stats:
+            "統計"
+        }
+    }
+}
+
 #if DEBUG
     #Preview {
+        @Previewable let modelContext = ModelContainer.shared.mainContext
         NavigationRootView { path in
             IndexView(path: path)
                 .environment(\.analyzerService, MockAnalyzerService.shared)
                 .modelContainer(ModelContainer.shared)
                 .task {
-                    await ModelContainer.shared.mainContext.insert(AnalyzedImage.mockAnalyzedImage())
+                    for tag in Tag.mockTags {
+                        modelContext.insert(tag)
+                    }
+                    await modelContext.insert(AnalyzedImage.mockAnalyzedImage())
                 }
         }
     }
