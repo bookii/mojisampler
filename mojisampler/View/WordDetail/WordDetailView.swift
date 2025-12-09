@@ -2,13 +2,17 @@
 //  WordDetailView.swift
 //  mojisampler
 //
-//  Created by Tsubasa YABUKI on 2025/11/30.
+//  Created by mizznoff on 2025/11/30.
 //
 
 import SwiftData
 import SwiftUI
 
 public struct WordDetailView: View {
+    private enum Destination: Hashable {
+        case tagDetail(_ tag: Tag)
+    }
+
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @State private var imageMaxHeight: CGFloat?
@@ -35,6 +39,9 @@ public struct WordDetailView: View {
                     .font(.headline)
                 ScrollView {
                     TagsFlowLayoutView(word.tags)
+                        .onSelectTag { selectedTag in
+                            path.append(Destination.tagDetail(selectedTag))
+                        }
                         .onDeleteTag { deletedTag in
                             word.tags.removeAll { $0.id == deletedTag.id }
                         }
@@ -47,6 +54,12 @@ public struct WordDetailView: View {
         }
         .padding(.horizontal, 16)
         .navigationTitle(word.text)
+        .navigationDestination(for: Destination.self) { destination in
+            switch destination {
+            case let .tagDetail(tag):
+                TagDetailView(path: $path, tag: tag)
+            }
+        }
         .alert(error?.localizedDescription ?? "Unknown error", isPresented: $isErrorAlertPresented) {
             Button("OK") {
                 self.error = nil
