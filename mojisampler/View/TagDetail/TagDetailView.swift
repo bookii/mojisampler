@@ -15,23 +15,21 @@ public struct TagDetailView: View {
     }
 
     private let tag: Tag
-    private var words: [Word]
     @Environment(\.modelContext) private var modelContext
     @Binding private var path: NavigationPath
 
     public init(path: Binding<NavigationPath>, tag: Tag) {
         _path = path
         self.tag = tag
-        words = tag.words
     }
 
     public var body: some View {
         Group {
-            if words.isEmpty {
+            if tag.words.isEmpty {
                 Text("ワードはありません")
             } else {
                 ScrollView {
-                    WordsFlowLayoutView(words)
+                    WordsFlowLayoutView(tag.words)
                         .onSelectWord { word in
                             path.append(Destination.wordDetail(word))
                         }
