@@ -5,27 +5,48 @@
 //  Created by mizznoff on 2025/11/03.
 //
 
-import Combine
 import Foundation
 import SwiftUI
 import UIKit
 
+@Observable
+public final class ImageConvertiveTextViewModel {
+    fileprivate enum Command {
+        case replace(markedText: String, uiImage: UIImage)
+        case render
+    }
+
+    fileprivate var isFirstResponder: Bool = false
+    fileprivate var command: Command?
+    fileprivate var isEditable: Bool = false
+
+    public func replace(markedText: String, with uiImage: UIImage) {
+        command = .replace(markedText: markedText, uiImage: uiImage)
+    }
+
+    public func render() {
+        command = .render
+    }
+
+    public func setEditable(_ isEditable: Bool) {
+        self.isEditable = isEditable
+    }
+}
+
 public struct ImageConvertiveTextView: UIViewRepresentable {
-    @Binding private var isFirstResponder: Bool
-    @Binding private var shouldRender: Bool
+    private let textView = UITextView()
+    @Bindable private var viewModel: ImageConvertiveTextViewModel
     fileprivate var onReceiveErrorAction: ((Error) -> Void)?
     private var onRenderImageAction: ((UIImage) -> Void)?
 
-    public init(isFirstResponder: Binding<Bool>, shouldRender: Binding<Bool>) {
-        _isFirstResponder = isFirstResponder
-        _shouldRender = shouldRender
+    public init(viewModel: ImageConvertiveTextViewModel) {
+        self.viewModel = viewModel
     }
 
     public func makeUIView(context: Context) -> UITextView {
-        let textView = UITextView()
         textView.font = .systemFont(ofSize: 24)
         textView.delegate = context.coordinator
-        textView.isEditable = true
+        textView.isSelectable = true
         textView.isScrollEnabled = true
         textView.textContainerInset = .init(top: 8, left: 8, bottom: 8, right: 8)
 
@@ -35,6 +56,8 @@ public struct ImageConvertiveTextView: UIViewRepresentable {
         let collectionView = HorizontalWordCollectionView(frame: toolbarFrame)
         toolbar.addSubview(collectionView)
         textView.inputAccessoryView = toolbar
+        textView.isEditable = viewModel.isEditable
+        viewModel.isFirstResponder = viewModel.isEditable
 
         context.coordinator.textView = textView
         context.coordinator.collectionView = collectionView
@@ -44,37 +67,58 @@ public struct ImageConvertiveTextView: UIViewRepresentable {
 
     public func updateUIView(_ uiView: UITextView, context: Context) {
         Task { @MainActor in
-            if isFirstResponder, !uiView.isFirstResponder {
+            if uiView.isEditable != viewModel.isEditable {
+                uiView.isEditable = viewModel.isEditable
+                viewModel.isFirstResponder = viewModel.isEditable
+            }
+            if viewModel.isFirstResponder, !uiView.isFirstResponder {
                 uiView.becomeFirstResponder()
-            } else if !isFirstResponder, uiView.isFirstResponder {
+            } else if !viewModel.isFirstResponder, uiView.isFirstResponder {
                 uiView.resignFirstResponder()
             }
         }
 
-        if shouldRender {
-            if let uiImage = context.coordinator.render() {
-                onRenderImageAction?(uiImage)
+        if let command = viewModel.command {
+            defer {
+                Task { @MainActor in
+                    viewModel.command = nil
+                }
             }
-            Task { @MainActor in
-                shouldRender = false
+            switch command {
+            case let .replace(markedText, uiImage):
+                guard let attributedText = textView.attributedText else {
+                    return
+                }
+                let mutableAttributedText = NSMutableAttributedString(attributedString: attributedText)
+                let fullText = mutableAttributedText.string
+                guard let range = fullText.range(of: markedText, options: .backwards) else {
+                    return
+                }
+
+                let nsRange = NSRange(range, in: fullText)
+                let attachment = NSTextAttachment()
+                attachment.image = uiImage
+
+                let imageSize = uiImage.size
+                let height: CGFloat = 32
+                let scale = height / imageSize.height
+                attachment.bounds = CGRect(x: 0, y: -8, width: imageSize.width * scale, height: height)
+
+                let imageAttributedString = NSAttributedString(attachment: attachment)
+                mutableAttributedText.replaceCharacters(in: nsRange, with: imageAttributedString)
+
+                textView.attributedText = mutableAttributedText
+                textView.font = .systemFont(ofSize: 24)
+            case .render:
+                if let uiImage = context.coordinator.render() {
+                    onRenderImageAction?(uiImage)
+                }
             }
         }
     }
 
     public func makeCoordinator() -> Coordinator {
         Coordinator(self)
-    }
-
-    public func onRenderImage(perform action: @escaping (UIImage) -> Void) -> Self {
-        var view = self
-        view.onRenderImageAction = action
-        return view
-    }
-
-    public func onReceiveError(perform action: @escaping (Error) -> Void) -> Self {
-        var view = self
-        view.onReceiveErrorAction = action
-        return view
     }
 
     public class Coordinator: NSObject {
@@ -108,34 +152,28 @@ public struct ImageConvertiveTextView: UIViewRepresentable {
             return image
         }
     }
-}
 
-extension ImageConvertiveTextView.Coordinator: UITextViewDelegate {
-    public func textViewDidChange(_ textView: UITextView) {
-        collectionView?.fullAttributedText = textView.attributedText
-        if let markedTextRange = textView.markedTextRange, let markedText = textView.text(in: markedTextRange) {
-            collectionView?.markedText = markedText
-        }
+    // MARK: - ViewModifier
+
+    public func onRenderImage(perform action: @escaping (UIImage) -> Void) -> Self {
+        var view = self
+        view.onRenderImageAction = action
+        return view
     }
 
-    public func textViewDidBeginEditing(_: UITextView) {
-        parent.isFirstResponder = true
+    public func onReceiveError(perform action: @escaping (Error) -> Void) -> Self {
+        var view = self
+        view.onReceiveErrorAction = action
+        return view
     }
 
-    public func textViewDidEndEditing(_: UITextView) {
-        parent.isFirstResponder = false
-    }
-}
+    // MARK: - Methods
 
-extension ImageConvertiveTextView.Coordinator: HorizontalWordCollectionViewDelegate {
-    public func horizontalWordCollectionView(_: HorizontalWordCollectionView, shouldReplace markedText: String, with uiImage: UIImage) {
-        guard let attributedText = textView?.attributedText else {
-            return
-        }
+    public func replace(markedText: String, in attributedText: NSAttributedString, with uiImage: UIImage) -> NSAttributedString? {
         let mutableAttributedText = NSMutableAttributedString(attributedString: attributedText)
         let fullText = mutableAttributedText.string
         guard let range = fullText.range(of: markedText, options: .backwards) else {
-            return
+            return nil
         }
 
         let nsRange = NSRange(range, in: fullText)
@@ -150,8 +188,30 @@ extension ImageConvertiveTextView.Coordinator: HorizontalWordCollectionViewDeleg
         let imageAttributedString = NSAttributedString(attachment: attachment)
         mutableAttributedText.replaceCharacters(in: nsRange, with: imageAttributedString)
 
-        textView?.attributedText = mutableAttributedText
-        textView?.font = .systemFont(ofSize: 24)
+        return mutableAttributedText
+    }
+}
+
+extension ImageConvertiveTextView.Coordinator: UITextViewDelegate {
+    public func textViewDidChange(_ textView: UITextView) {
+        collectionView?.fullAttributedText = textView.attributedText
+        if let markedTextRange = textView.markedTextRange, let markedText = textView.text(in: markedTextRange) {
+            collectionView?.markedText = markedText
+        }
+    }
+
+    public func textViewDidBeginEditing(_: UITextView) {
+        parent.viewModel.isFirstResponder = true
+    }
+
+    public func textViewDidEndEditing(_: UITextView) {
+        parent.viewModel.isFirstResponder = false
+    }
+}
+
+extension ImageConvertiveTextView.Coordinator: HorizontalWordCollectionViewDelegate {
+    public func horizontalWordCollectionView(_: HorizontalWordCollectionView, shouldReplace markedText: String, with uiImage: UIImage) {
+        parent.viewModel.replace(markedText: markedText, with: uiImage)
     }
 
     public func horizontalWordCollectionView(_: HorizontalWordCollectionView, didReceive error: Error) {
@@ -161,11 +221,9 @@ extension ImageConvertiveTextView.Coordinator: HorizontalWordCollectionViewDeleg
 
 #if DEBUG
     #Preview {
-        @Previewable @State var nsAttributedText = NSAttributedString(string: "")
-        @Previewable @State var isFirstResponder = false
-        @Previewable @State var shouldRender = false
+        @Previewable @State var viewModel = ImageConvertiveTextViewModel()
 
-        ImageConvertiveTextView(isFirstResponder: $isFirstResponder, shouldRender: $shouldRender)
+        ImageConvertiveTextView(viewModel: viewModel)
             .clipShape(RoundedRectangle(cornerRadius: 8))
             .padding(16)
             .background {
