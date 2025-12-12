@@ -11,6 +11,7 @@ import SwiftUI
 import UIKit
 
 public struct ExtractorView: View {
+    private let uiImage: UIImage
     @Environment(\.analyzerService) private var analyzerService
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -20,8 +21,17 @@ public struct ExtractorView: View {
     @State private var isErrorAlertPresented: Bool = false
     @State private var viewWidth: CGFloat = 0
     @State private var tagSearchWord: String = ""
-    @State private var tags: [Tag] = []
-    private let uiImage: UIImage
+    @State private var selectedTags: [Tag] = []
+    @Query private var allTags: [Tag]
+    private var suggestedTags: [Tag] {
+        guard !tagSearchWord.trimmingCharacters(in: .whitespaces).isEmpty else {
+            return []
+        }
+        return allTags.filter { allTag in !selectedTags.contains(where: { $0.text == allTag.text }) }
+            .filter { $0.text.localizedStandardContains(tagSearchWord) }
+            .prefix(5)
+            .map(\.self)
+    }
 
     public init(path: Binding<NavigationPath>, uiImage: UIImage) {
         _path = path
@@ -38,6 +48,24 @@ public struct ExtractorView: View {
         }
         .navigationTitle("文字のサンプリング")
         .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .bottom) {
+            if !suggestedTags.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(suggestedTags) { tag in
+                            Button {
+                                selectedTags.append(tag)
+                                tagSearchWord = ""
+                            } label: {
+                                tagView(tag)
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                    }
+                    .scrollClipDisabled()
+                }
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("保存") {
@@ -45,11 +73,11 @@ public struct ExtractorView: View {
                         return
                     }
                     for word in analyzedImage.words {
-                        word.tags = tags
+                        word.tags = selectedTags
                         modelContext.insert(word)
                     }
                     modelContext.insert(analyzedImage)
-                    for tag in tags {
+                    for tag in selectedTags {
                         modelContext.insert(tag)
                     }
                     do {
@@ -60,7 +88,7 @@ public struct ExtractorView: View {
                         isErrorAlertPresented = true
                     }
                 }
-                .disabled(tags.isEmpty)
+                .disabled(selectedTags.isEmpty)
             }
             ToolbarItem(placement: .bottomBar) {
                 TextField("タグを入力", text: $tagSearchWord)
@@ -68,7 +96,7 @@ public struct ExtractorView: View {
             }
             ToolbarItem(placement: .bottomBar) {
                 Button("", systemImage: "plus", role: .none) {
-                    tags.append(.init(text: tagSearchWord))
+                    selectedTags.append(.init(text: tagSearchWord))
                     tagSearchWord = ""
                 }
                 .disabled(tagSearchWord.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -92,35 +120,37 @@ public struct ExtractorView: View {
         VStack(alignment: .leading, spacing: 16) {
             ScrollView(.horizontal) {
                 HStack(spacing: 8) {
-                    ForEach(tags) { tag in
-                        tagView(tag)
+                    ForEach(selectedTags) { tag in
+                        Menu {
+                            Button("削除", role: .destructive) {
+                                selectedTags.removeAll(where: { $0.id == tag.id })
+                            }
+                        } label: {
+                            tagView(tag)
+                        }
                     }
                 }
+                .padding(.horizontal, 16)
             }
+            .scrollClipDisabled()
             ScrollView {
                 WordsFlowLayoutView(data: .init(words: analyzedImage.words))
                     .onGeometryChange(for: CGFloat.self, of: \.size.width) { width in
                         viewWidth = width
                     }
+                    .padding(.horizontal, 16)
             }
         }
-        .padding(.horizontal, 16)
     }
 
     private func tagView(_ tag: Tag) -> some View {
-        Menu {
-            Button("削除", role: .destructive) {
-                tags.removeAll(where: { $0.id == tag.id })
-            }
-        } label: {
-            Text("#\(tag.text)")
-                .font(.body)
-        }
-        .foregroundStyle(Color.white)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(in: Capsule())
-        .backgroundStyle(Color.blue)
+        Text("#\(tag.text)")
+            .font(.body)
+            .foregroundStyle(Color.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(in: Capsule())
+            .backgroundStyle(Color.blue)
     }
 }
 
