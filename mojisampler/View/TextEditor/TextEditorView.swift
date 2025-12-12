@@ -26,7 +26,7 @@ public struct TextEditorView: View {
     private let tag: Tag
     @Environment(\.dismiss) private var dismiss
     @Binding private var path: NavigationPath
-    @State private var viewModel = ImageConvertiveTextViewModel()
+    @State private var data = ImageConvertiveTextViewRepresentable.Data()
     @State private var selectedWordPickerTab: WordPickerTab = .basedOnTag
     @State private var savedImage: UIImage?
     @State private var isSaveCompletionAlertPresented: Bool = false
@@ -58,7 +58,7 @@ public struct TextEditorView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    viewModel.render()
+                    data.shouldRender = true
                 } label: {
                     Image(systemName: "square.and.arrow.down")
                 }
@@ -82,13 +82,18 @@ public struct TextEditorView: View {
                 ShareImageActivityView(uiImage: savedImage)
             }
         }
-        .onChange(of: selectedWordPickerTab) { _, newValue in
-            viewModel.setEditable(newValue == .others)
+        .onChange(of: selectedWordPickerTab, initial: true) { _, _ in
+            data.inputMode = switch selectedWordPickerTab {
+            case .basedOnTag:
+                .basedOnTag(words: tag.words)
+            case .others:
+                .others
+            }
         }
     }
 
     private var textView: some View {
-        ImageConvertiveTextView(viewModel: viewModel)
+        ImageConvertiveTextViewRepresentable(data: $data)
             .onRenderImage { uiImage in
                 Task {
                     do {
@@ -104,10 +109,6 @@ public struct TextEditorView: View {
                         }
                     }
                 }
-            }
-            .onReceiveError { error in
-                self.error = error
-                isErrorAlertPresented = true
             }
             .clipShape(RoundedRectangle(cornerRadius: 8))
     }

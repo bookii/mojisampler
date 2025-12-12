@@ -25,7 +25,7 @@ public struct IndexView: View {
     @Binding private var path: NavigationPath
     @Query private var tags: [Tag]
     @Query private var analyzedImages: [AnalyzedImage]
-    @State private var selectedTab: TabType = .words
+    @State private var selectedTab: TabType = .tags
     @State private var pickerItem: PhotosPickerItem?
 
     public init(path: Binding<NavigationPath>) {
@@ -100,7 +100,7 @@ public struct IndexView: View {
 
     private var wordsView: some View {
         ScrollView {
-            WordsFlowLayoutView(analyzedImages.flatMap(\.words))
+            WordsFlowLayoutView(data: .init(words: analyzedImages.flatMap(\.words)))
                 .onSelectWord { word in
                     path.append(Destination.wordDetail(word))
                 }

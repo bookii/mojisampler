@@ -1,26 +1,36 @@
 //
-//  WordsScrollFlowView.swift
+//  WordsFlowLayoutView.swift
 //  mojisampler
 //
 //  Created by mizznoff on 2025/11/06.
 //
 
+import Observation
 import SwiftUI
 
 public struct WordsFlowLayoutView: View {
-    private var words: [Word]
+    @Observable
+    public class Data {
+        public var words: [Word]
+
+        public init(words: [Word] = []) {
+            self.words = words
+        }
+    }
+
+    @State private var data: Data
     private var onLastWordAppearAction: (() -> Void)?
     private var onSelectWordAction: ((Word) -> Void)?
     private var onDeleteWordAction: ((Word) -> Void)?
 
-    public init(_ words: [Word]) {
-        self.words = words
+    public init(data: Data) {
+        self.data = data
     }
 
     public var body: some View {
         HStack(spacing: 0) {
             FlowLayout(alignment: .topLeading, spacing: 8) {
-                ForEach(words) { word in
+                ForEach(data.words) { word in
                     if let uiImage = UIImage(data: word.imageData) {
                         Button {
                             onSelectWordAction?(word)
@@ -30,7 +40,7 @@ public struct WordsFlowLayoutView: View {
                                 .scaledToFit()
                                 .frame(height: 66)
                                 .onAppear {
-                                    if word.id == words.last?.id {
+                                    if word.id == data.words.last?.id {
                                         onLastWordAppearAction?()
                                     }
                                 }
@@ -72,11 +82,11 @@ public struct WordsFlowLayoutView: View {
 
 #if DEBUG
     #Preview {
-        @Previewable @State var words = [Word]()
+        @Previewable @State var data = WordsFlowLayoutView.Data()
         @Previewable @State var text = ""
         ScrollView {
             VStack {
-                WordsFlowLayoutView(words)
+                WordsFlowLayoutView(data: data)
                     .onLastWordAppear {
                         text = "Last word appeared"
                     }
@@ -84,7 +94,7 @@ public struct WordsFlowLayoutView: View {
                         text = "\(word.text) selected"
                     }
                     .onDeleteWord { word in
-                        words.removeAll { $0.id == word.id }
+                        data.words.removeAll { $0.id == word.id }
                     }
                     .frame(maxWidth: .infinity)
                 Text(text)
@@ -92,7 +102,7 @@ public struct WordsFlowLayoutView: View {
             .padding(16)
         }
         .task {
-            words = await AnalyzedImage.mockAnalyzedImage().words
+            data.words = await AnalyzedImage.mockAnalyzedImage().words
         }
     }
 #endif
