@@ -98,7 +98,7 @@ public struct ExtractorView: View {
                 }
             }
             ScrollView {
-                WordsFlowLayoutView(analyzedImage.words)
+                WordsFlowLayoutView(data: .init(words: analyzedImage.words))
                     .onGeometryChange(for: CGFloat.self, of: \.size.width) { width in
                         viewWidth = width
                     }

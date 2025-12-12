@@ -29,7 +29,7 @@ public struct TagDetailView: View {
                 Text("ワードはありません")
             } else {
                 ScrollView {
-                    WordsFlowLayoutView(tag.words)
+                    WordsFlowLayoutView(data: .init(words: tag.words))
                         .onSelectWord { word in
                             path.append(Destination.wordDetail(word))
                         }

@@ -53,7 +53,8 @@ public final class HorizontalWordCollectionView: UICollectionView {
 
         showsHorizontalScrollIndicator = false
         showsVerticalScrollIndicator = false
-        backgroundColor = .clear
+        backgroundColor = .systemBackground
+        layer.cornerRadius = 8
         contentInsetAdjustmentBehavior = .never
     }
 
