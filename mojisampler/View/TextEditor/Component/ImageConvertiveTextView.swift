@@ -60,7 +60,7 @@ public class ImageConvertiveTextView: UITextView {
         let hostingController = UIHostingController(rootView: WordsFlowLayoutScrollView(data: data))
 
         let screenSize: CGSize = (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.screen.bounds.size ?? .zero
-        hostingController.view.frame = CGRect(x: 0, y: 0, width: screenSize.width, height: screenSize.height * 0.3)
+        hostingController.view.frame = CGRect(x: 0, y: 0, width: screenSize.width, height: screenSize.height * 0.4)
         hostingController.view.backgroundColor = .clear
         wordsFlowLayoutViewHostingController = hostingController
 
