@@ -26,7 +26,7 @@ public struct TextEditorView: View {
     private let tag: Tag
     @Environment(\.dismiss) private var dismiss
     @Binding private var path: NavigationPath
-    @State private var data = ImageConvertiveTextViewRepresentable.Data()
+    @State private var data: ImageConvertiveTextViewRepresentable.Data
     @State private var selectedWordPickerTab: WordPickerTab = .basedOnTag
     @State private var savedImage: UIImage?
     @State private var isSaveCompletionAlertPresented: Bool = false
@@ -37,6 +37,7 @@ public struct TextEditorView: View {
     public init(path: Binding<NavigationPath>, tag: Tag) {
         _path = path
         self.tag = tag
+        data = ImageConvertiveTextViewRepresentable.Data(tagText: tag.text)
     }
 
     public var body: some View {

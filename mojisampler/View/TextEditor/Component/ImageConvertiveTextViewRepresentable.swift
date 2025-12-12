@@ -13,10 +13,12 @@ public struct ImageConvertiveTextViewRepresentable: UIViewRepresentable {
 
     @Observable
     public class Data {
+        @ObservationIgnored public let tagText: String
         public var inputMode: InputMode
         public var shouldRender: Bool
 
-        public init(inputMode: InputMode = .others, shouldRender: Bool = false) {
+        public init(tagText: String, inputMode: InputMode = .others, shouldRender: Bool = false) {
+            self.tagText = tagText
             self.inputMode = inputMode
             self.shouldRender = shouldRender
         }
@@ -39,7 +41,7 @@ public struct ImageConvertiveTextViewRepresentable: UIViewRepresentable {
 
         if data.shouldRender {
             if let onRenderImageAction {
-                onRenderImageAction(uiView.render())
+                onRenderImageAction(uiView.render(tagText: data.tagText))
             }
             data.shouldRender = false
         }
@@ -56,7 +58,7 @@ public struct ImageConvertiveTextViewRepresentable: UIViewRepresentable {
 
 #if DEBUG
     #Preview {
-        @Previewable @State var data = ImageConvertiveTextViewRepresentable.Data()
+        @Previewable @State var data = ImageConvertiveTextViewRepresentable.Data(tagText: "新聞")
         ImageConvertiveTextViewRepresentable(data: $data)
             .clipShape(RoundedRectangle(cornerRadius: 8))
             .padding(16)

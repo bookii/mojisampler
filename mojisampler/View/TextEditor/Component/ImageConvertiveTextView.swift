@@ -125,14 +125,41 @@ public class ImageConvertiveTextView: UITextView {
         font = .systemFont(ofSize: fontSize)
     }
 
-    public func render() -> UIImage {
+    public func render(tagText: String) -> UIImage {
         let selectedTextRange = selectedTextRange
         self.selectedTextRange = nil
+
         let width = bounds.width
-        let height = sizeThatFits(.init(width: bounds.width, height: .greatestFiniteMagnitude)).height
-        let render = UIGraphicsImageRenderer(size: .init(width: width, height: height))
+        let tagHeight: CGFloat = 40
+        let bodyHeight = sizeThatFits(.init(width: bounds.width, height: .greatestFiniteMagnitude)).height
+        let imageSize = CGSize(width: width, height: tagHeight + bodyHeight)
+        let render = UIGraphicsImageRenderer(size: imageSize)
+
         let image = render.image { context in
+            // TODO: 切り取った角を透過する
+            let roundedPath = UIBezierPath(roundedRect: CGRect(origin: .zero, size: imageSize), cornerRadius: 16)
+            context.cgContext.addPath(roundedPath.cgPath)
+            context.cgContext.clip()
+            context.cgContext.setFillColor(UIColor.systemBackground.cgColor)
+            context.cgContext.fill(.init(origin: .zero, size: imageSize))
+
+            context.cgContext.saveGState()
+            context.cgContext.translateBy(x: 0, y: tagHeight)
             layer.render(in: context.cgContext)
+            context.cgContext.restoreGState()
+
+            let tagRenderText = "#\(tagText)"
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.alignment = .center
+
+            tagRenderText.draw(in: .init(x: 0, y: 8, width: width, height: tagHeight - 8),
+                               withAttributes: [
+                                   .font: UIFont.systemFont(ofSize: tagHeight - 16),
+                                   .foregroundColor: UIColor.secondaryLabel,
+                                   .paragraphStyle: paragraphStyle,
+                               ])
+        }
+        Task { @MainActor in
             self.selectedTextRange = selectedTextRange
         }
         return image
