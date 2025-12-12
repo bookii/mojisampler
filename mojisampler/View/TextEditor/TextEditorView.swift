@@ -50,9 +50,6 @@ public struct TextEditorView: View {
             Color.gray
                 .ignoresSafeArea()
         }
-        .task {
-            selectedWordPickerTab = selectedWordPickerTab
-        }
         .navigationTitle("テキストの作成")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -121,10 +118,6 @@ public struct TextEditorView: View {
             }
         }
         .pickerStyle(.segmented)
-    }
-
-    private var wordPicker: some View {
-        EmptyView()
     }
 
     // MARK: - ViewModifier
