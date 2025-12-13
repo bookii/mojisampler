@@ -40,7 +40,7 @@ public class ImageConvertiveTextView: UITextView {
         }
     }
 
-    private let fontSize: CGFloat = 28
+    private let baseFontSize: CGFloat = 40
     private let data = WordsFlowLayoutView.Data()
     private let wordsCollectionView: HorizontalWordCollectionView
     private let wordsToolbar: UIToolbar
@@ -66,7 +66,7 @@ public class ImageConvertiveTextView: UITextView {
 
         super.init(frame: .zero, textContainer: nil)
 
-        font = .systemFont(ofSize: fontSize)
+        font = .systemFont(ofSize: fontSize())
         isEditable = true
         delegate = self
         wordsCollectionView.horizontalWordCollectionViewDelegate = self
@@ -97,15 +97,15 @@ public class ImageConvertiveTextView: UITextView {
         attachment.image = uiImage
 
         let imageSize = uiImage.size
-        let height: CGFloat = 32
-        let scale = height / imageSize.height
-        attachment.bounds = CGRect(x: 0, y: -8, width: imageSize.width * scale, height: height)
+        let fontSize = fontSize()
+        let scale = fontSize / imageSize.height
+        attachment.bounds = CGRect(x: 0, y: -8, width: imageSize.width * scale, height: fontSize)
 
-        let imageAttributedString = NSAttributedString(attachment: attachment)
+        let imageAttributedString = imageAttributedString(attachment: attachment, fontSize: fontSize)
         mutableAttributedText.replaceCharacters(in: nsRange, with: imageAttributedString)
 
         attributedText = mutableAttributedText
-        font = .systemFont(ofSize: fontSize)
+        font = .systemFont(ofSize: baseFontSize)
     }
 
     public func insert(uiImage: UIImage) {
@@ -115,14 +115,14 @@ public class ImageConvertiveTextView: UITextView {
         attachment.image = uiImage
 
         let imageSize = uiImage.size
-        let height: CGFloat = 32
-        let scale = height / imageSize.height
-        attachment.bounds = CGRect(x: 0, y: -8, width: imageSize.width * scale, height: height)
+        let fontSize = fontSize()
+        let scale = fontSize / imageSize.height
+        attachment.bounds = CGRect(x: 0, y: -8, width: imageSize.width * scale, height: fontSize)
 
-        let imageAttributedString = NSAttributedString(attachment: attachment)
+        let imageAttributedString = imageAttributedString(attachment: attachment, fontSize: fontSize)
         mutableAttributedText.insert(imageAttributedString, at: selectedRanges.first!.location)
         attributedText = mutableAttributedText
-        font = .systemFont(ofSize: fontSize)
+        font = .systemFont(ofSize: baseFontSize)
     }
 
     public func render(tagText: String) -> UIImage {
@@ -164,6 +164,19 @@ public class ImageConvertiveTextView: UITextView {
         }
         return image
     }
+
+    private func fontSize() -> CGFloat {
+        CGFloat.random(in: 32 ... 48)
+    }
+    
+    private func imageAttributedString(attachment: NSTextAttachment, fontSize: CGFloat) -> NSAttributedString {
+        return NSAttributedString(attachment: attachment,
+                                  attributes: [.baselineOffset: baselineOffset(fontSize: fontSize)])
+    }
+
+    private func baselineOffset(fontSize: CGFloat) -> CGFloat {
+        CGFloat.random(in:  0 ... 48 - fontSize)
+    }
 }
 
 extension ImageConvertiveTextView: HorizontalWordCollectionViewDelegate {
@@ -192,7 +205,10 @@ private struct WordsFlowLayoutScrollView: View {
                 }
                 .padding(16)
         }
-        .background(Color(.systemBackground))
+        .background {
+            Color(.systemBackground)
+                .ignoresSafeArea(.all, edges: .bottom)
+        }
         .clipShape(UnevenRoundedRectangle(cornerRadii: .init(topLeading: 24, topTrailing: 24)))
     }
 
