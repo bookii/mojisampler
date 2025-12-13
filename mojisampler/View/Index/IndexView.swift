@@ -24,7 +24,7 @@ public struct IndexView: View {
 
     @Binding private var path: NavigationPath
     @Query private var tags: [Tag]
-    @Query private var analyzedImages: [AnalyzedImage]
+    @Query(sort: \AnalyzedImage.createdAt, order: .reverse) private var analyzedImages: [AnalyzedImage]
     @State private var selectedTab: TabType = .tags
     @State private var pickerItem: PhotosPickerItem?
 
@@ -50,6 +50,7 @@ public struct IndexView: View {
                 Image(systemName: "chart.bar.xaxis")
             }
         }
+        .id(UUID())
         .padding(.horizontal, 16)
         .onChange(of: pickerItem) {
             guard let pickerItem else {
@@ -99,7 +100,7 @@ public struct IndexView: View {
     }
 
     private var wordsView: some View {
-        ScrollView {
+        ScrollView(showsIndicators: false) {
             WordsFlowLayoutView(data: .init(words: analyzedImages.flatMap(\.words)))
                 .onSelectWord { word in
                     path.append(Destination.wordDetail(word))
