@@ -28,7 +28,7 @@ public struct TagDetailView: View {
             if tag.words.isEmpty {
                 Text("ワードはありません")
             } else {
-                ScrollView {
+                ScrollView(showsIndicators: false) {
                     WordsFlowLayoutView(data: .init(words: tag.words))
                         .onSelectWord { word in
                             path.append(Destination.wordDetail(word))
@@ -36,7 +36,7 @@ public struct TagDetailView: View {
                 }
             }
         }
-        .padding(16)
+        .padding(.horizontal, 16)
         .navigationTitle("#\(tag.text)")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(for: Destination.self) { destination in

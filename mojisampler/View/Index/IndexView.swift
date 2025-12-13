@@ -50,7 +50,6 @@ public struct IndexView: View {
                 Image(systemName: "chart.bar.xaxis")
             }
         }
-        .id(UUID())
         .padding(.horizontal, 16)
         .onChange(of: pickerItem) {
             guard let pickerItem else {
@@ -105,11 +104,12 @@ public struct IndexView: View {
                 .onSelectWord { word in
                     path.append(Destination.wordDetail(word))
                 }
+                .id(UUID())
         }
     }
 
     private var tagsView: some View {
-        ScrollView {
+        ScrollView(showsIndicators: false) {
             TagsFlowLayoutView(tags)
                 .onSelectTag { tag in
                     path.append(Destination.tagDetail(tag))

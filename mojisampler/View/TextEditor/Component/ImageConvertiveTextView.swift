@@ -66,7 +66,7 @@ public class ImageConvertiveTextView: UITextView {
 
         super.init(frame: .zero, textContainer: nil)
 
-        font = .systemFont(ofSize: fontSize())
+        font = .systemFont(ofSize: baseFontSize)
         isEditable = true
         delegate = self
         wordsCollectionView.horizontalWordCollectionViewDelegate = self
@@ -168,14 +168,14 @@ public class ImageConvertiveTextView: UITextView {
     private func fontSize() -> CGFloat {
         CGFloat.random(in: 32 ... 48)
     }
-    
+
     private func imageAttributedString(attachment: NSTextAttachment, fontSize: CGFloat) -> NSAttributedString {
         return NSAttributedString(attachment: attachment,
                                   attributes: [.baselineOffset: baselineOffset(fontSize: fontSize)])
     }
 
     private func baselineOffset(fontSize: CGFloat) -> CGFloat {
-        CGFloat.random(in:  0 ... 48 - fontSize)
+        CGFloat.random(in: 0 ... 48 - fontSize)
     }
 }
 
